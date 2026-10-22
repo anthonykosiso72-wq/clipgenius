@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClipGenius</title>
+<style>
+:root{--bg:#0d0b14;--surf:#17131f;--surf2:#1f1a2b;--line:#2c2540;--txt:#f5f3ff;--mut:#9b93b5;--acc:#8b5cf6;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(13,11,20,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:18px;background:linear-gradient(90deg,var(--acc2),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--surf2);color:var(--mut);border:1px solid var(--line)}
+.badge.live{color:var(--ok);border-color:#1f5a47}.badge.demo{color:var(--warn);border-color:#5a4a1f}
+main{max-width:920px;margin:0 auto;padding:18px}
+.view{display:none}.view.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:22px;margin:4px 0}h2{font-size:15px;margin:22px 0 10px;color:var(--acc2)}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s,transform .2s}
+.card:hover{border-color:#3d3360}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600;padding:12px 18px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#6d28d9);color:#fff;transition:transform .15s,filter .15s}
+.btn:hover{filter:brightness(1.1)}.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--surf2);border:1px solid var(--line);color:var(--txt)}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.full{width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+input,textarea,select{width:100%;font:inherit;color:var(--txt);background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);border-color:transparent}
+.lbl{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
+.drop{display:block;border:2px dashed #3d3360;border-radius:16px;padding:36px 16px;text-align:center;color:var(--mut);cursor:pointer;transition:.2s}
+.drop:hover,.drop.over{border-color:var(--acc);background:rgba(139,92,246,.07);color:var(--txt)}
+.drop input{display:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:99px;border:1px solid var(--line);background:var(--surf2);cursor:pointer;font-size:13px;color:var(--mut);user-select:none}
+.chip.on{border-color:var(--acc);color:var(--txt);background:rgba(139,92,246,.2)}
+.thumb{aspect-ratio:16/10;border-radius:12px;background:linear-gradient(135deg,#4c1d95,#1e1b4b 60%,#0d0b14);display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden}
+.thumb .time{position:absolute;right:8px;bottom:8px;font-size:11px;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:6px}
+.card.proj{cursor:pointer}.proj h3{font-size:15px;margin:10px 0 2px}
+.meta{font-size:12px;color:var(--mut)}
+.stage{position:relative;margin:0 auto;background:#000;border-radius:16px;overflow:hidden;width:100%;max-width:340px;aspect-ratio:9/16}
+.stage.f11{aspect-ratio:1/1}.stage.f169{aspect-ratio:16/9;max-width:100%}
+#vid{width:100%;height:100%;object-fit:contain;display:none}
+.stage.has #vid{display:block}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);text-align:center;padding:20px}
+.stage.has .empty{display:none}
+.cap{position:absolute;left:8%;right:8%;bottom:12%;text-align:center;font-weight:800;font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.85);pointer-events:none;line-height:1.25}
+.cap span{display:inline-block}
+.cap.box span{background:rgba(0,0,0,.8);padding:4px 10px;border-radius:8px}
+.cap.pop{font-size:24px;color:#fde047}
+.cap.minimal{font-weight:600;font-size:17px}
+.clip{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:var(--surf2);border:1px solid var(--line);cursor:pointer;margin-bottom:8px;transition:border-color .2s}
+.clip.on{border-color:var(--acc)}
+.clip .n{width:34px;height:34px;border-radius:10px;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--acc2);flex:none}
+.clip .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip small{color:var(--mut)}
+.item{padding:12px 14px;border-radius:12px;background:var(--surf2);border:1px solid var(--line);margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.item p{margin:0}
+.copy{flex:none;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--acc2);cursor:pointer}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:rgba(23,19,31,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:6}
+nav.tabs button{background:none;border:0;color:var(--mut);font:inherit;font-size:12px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:10px}
+nav.tabs button.on{color:var(--acc2)}
+nav.tabs i{font-style:normal;font-size:18px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--surf2);border:1px solid var(--acc);padding:10px 16px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;z-index:9;font-size:14px;max-width:92%;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.note{font-size:12px;color:var(--mut);border-left:3px solid var(--warn);padding:8px 12px;background:rgba(251,191,36,.06);border-radius:6px;margin:14px 0}
+dialog{background:var(--surf);color:var(--txt);border:1px solid var(--line);border-radius:16px;padding:20px;width:92%;max-width:420px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.capPanel{margin-top:18px}
+.pre{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.pre .chip{flex:none}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.frow label{font-size:12px;color:var(--mut)}.frow input,.frow select{margin-top:4px;padding:8px 10px}
+.frow input[type=color]{height:40px;padding:4px}
+.seg{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.seg .tm{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-top:6px}
+.seg .tm input{padding:7px 9px;font-size:13px}
+.prog{height:8px;background:var(--surf2);border-radius:99px;overflow:hidden;margin:8px 0}
+.prog div{height:100%;width:0;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width .3s}
+.err{border:1px solid #6b2a2a;background:rgba(239,68,68,.08);color:#fca5a5;padding:10px 12px;border-radius:12px;font-size:14px;margin:10px 0}
+.ok{border:1px solid #1f5a47;background:rgba(52,211,153,.07);color:var(--ok);padding:10px 12px;border-radius:12px;font-size:14px;margin:10px 0}
+.unsup{color:var(--warn);font-size:13px}
+.fontlist{display:grid;gap:8px;max-height:280px;overflow-y:auto;padding-right:2px}
+.fitem{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surf2);cursor:pointer}
+.fitem.on{border-color:var(--acc);background:rgba(139,92,246,.14)}
+</style></head>
+<body>
+<header><div class="logo">ClipGenius</div><span class="badge" id="mode">Ready</span></header>
+<main>
+
+<section class="view on" id="dash">
+  <div class="card" style="text-align:center;padding:28px 18px;margin-top:6px">
+    <div class="logo" style="font-size:30px">ClipGenius</div>
+    <p class="sub" style="margin:6px 0 18px">Turn your videos into captioned, share-ready clips.</p>
+    <button class="btn full" style="font-size:17px;padding:16px" onclick="go('upload');$('#file').click()">＋ Create New Project</button>
+  </div>
+  <h2>Recent projects</h2>
+  <div id="recent"></div>
+  <p class="meta" style="margin-top:12px">Projects last only while this page stays open. Permanent saving needs a backend.</p>
+  <button class="btn ghost full" style="margin-top:14px" onclick="share()">Invite friends</button>
+</section>
+<section class="view" id="upload">
+  <h1>Select a video</h1>
+  <p class="sub">Choose an MP4 or WebM from your gallery or files. Nothing is uploaded or processed until you tap Generate.</p>
+  <label class="drop" id="drop"><input type="file" id="file" accept="video/*"><div style="font-size:34px">🎞️</div><b>Choose from gallery or files</b><div class="meta">MP4 or WebM work best</div></label>
+  <div id="upMsg"></div>
+  <div class="card" style="margin-top:14px" id="fileInfo"></div>
+  <video id="prev" controls playsinline style="display:none;width:100%;border-radius:16px;margin-top:12px;background:#000"></video>
+  <div class="note">Long or high-resolution videos take longer to process. Keep this screen open while processing.</div>
+  <button class="btn full" id="toCustom" disabled onclick="go('customize')">Continue →</button>
+</section>
+<section class="view" id="hooks">
+  <h1>Hook generator</h1>
+  <p class="sub">Describe your video and get hooks and captions.</p>
+  <label class="lbl">Topic or video summary</label>
+  <textarea id="topic" placeholder="e.g. 5 budget meal-prep tips for busy students"></textarea>
+  <label class="lbl">Video title (optional)</label>
+  <input id="vtitle" placeholder="e.g. Weekend cooking vlog">
+  <label class="lbl">Tone</label>
+  <div class="chips">
+    <span class="chip on" data-tone="Energetic">Energetic</span>
+    <span class="chip" data-tone="Funny">Funny</span>
+    <span class="chip" data-tone="Inspiring">Inspiring</span>
+    <span class="chip" data-tone="Educational">Educational</span>
+  </div>
+  <div style="margin-top:16px"><button class="btn full" id="genBtn" onclick="generate()">Generate hooks & captions</button></div>
+  <div id="hookOut" style="margin-top:6px"></div>
+</section>
+
+<section class="view" id="preview">
+  <h1>Preview & export</h1>
+  <p class="sub">Choose a format and caption style. Preview plays the suggested clip ranges from your video.</p>
+  <div class="chips" id="fmts" style="margin-bottom:10px">
+    <span class="chip on" data-fmt="9:16">9:16 Reels</span>
+    <span class="chip" data-fmt="1:1">1:1 Square</span>
+    <span class="chip" data-fmt="16:9">16:9 Landscape</span>
+  </div>
+  <div class="stage" id="stage">
+    <video id="vid" playsinline controls></video>
+    <div class="cap box" id="cap"><span></span></div>
+    <div class="empty">Upload a video to preview it here.</div>
+  </div>
+  <label class="lbl">Hook shown on video</label>
+  <select id="hookSel"><option>Generate hooks first</option></select>
+  <h2>Suggested clips <span class="meta">(timing is a demo estimate)</span></h2>
+  <div id="clips"><p class="meta">Upload a video to see suggested clips.</p></div>
+  <div class="card capPanel">
+    <div class="row" style="justify-content:space-between"><b>Auto captions</b><span class="meta" id="capStatus">No transcript yet</span></div>
+    <label class="lbl">Spoken language</label>
+    <select id="lang"></select>
+    <div class="unsup" id="langNote"></div>
+    <div style="margin-top:10px"><button class="btn full" id="autoBtn" onclick="autoCaptions()">✨ Auto Captions</button></div>
+    <div class="prog" id="prog" style="display:none"><div id="progBar"></div></div>
+    <div id="capMsg"></div>
+  </div>
+  <h2>Caption style</h2>
+  <div class="pre">
+    <span class="chip on" data-preset="clean" onclick="applyPreset('clean')">Clean subtitles</span>
+    <span class="chip" data-preset="bold" onclick="applyPreset('bold')">Bold creator</span>
+    <span class="chip" data-preset="word" onclick="applyPreset('word')">Word-by-word</span>
+    <span class="chip" data-preset="karaoke" onclick="applyPreset('karaoke')">Karaoke</span>
+  </div>
+  <div class="frow">
+    <div><label>Font</label><select id="cFont" onchange="setSt('font',this.value)"><option value="system-ui">Sans</option><option value="Georgia,serif">Serif</option><option value="ui-monospace,monospace">Mono</option><option value="Impact,system-ui">Impact</option></select></div>
+    <div><label>Position</label><select id="cPos" onchange="setSt('pos',this.value)"><option value="top">Top</option><option value="middle">Middle</option><option value="bottom">Bottom</option></select></div>
+    <div><label>Size (<span id="szV">5</span>%)</label><input type="range" min="3" max="10" step="0.5" value="5" id="cSize" oninput="szV.textContent=this.value;setSt('size',+this.value)"></div>
+    <div><label>Text color</label><input type="color" id="cCol" value="#ffffff" oninput="setSt('color',this.value)"></div>
+    <div><label>Background color</label><input type="color" id="cBg" value="#000000" oninput="setSt('bgc',this.value)"></div>
+    <div><label>Background box</label><select id="cBox" onchange="setSt('bg',this.value==='on')"><option value="on">On</option><option value="off">Off</option></select></div>
+    <div><label>Outline</label><select id="cOut" onchange="setSt('outline',this.value==='on')"><option value="on">On</option><option value="off">Off</option></select></div>
+  </div>
+  <h2>Transcript <span class="meta">(edit text and timing)</span></h2>
+  <div id="segs"></div>
+  <button class="btn ghost full" onclick="addSeg()">+ Add caption line</button>
+  <div class="card" style="margin-top:12px">
+    <b>Export captioned video</b>
+    <div class="meta" id="expMsg" style="margin:4px 0 10px">Plays the video in real time and records it with captions burned in. Output is WebM. Keep this screen open until it finishes.</div>
+    <div class="prog" id="eprog" style="display:none"><div id="eBar"></div></div>
+    <button class="btn full" id="expBtn" onclick="exportCaptioned()">Export with captions</button>
+    <a id="expOut" class="btn ghost full" style="display:none;margin-top:8px" download>Download captioned video</a>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn" onclick="openExport()">Export</button>
+    <button class="btn ghost" onclick="share()">Share</button>
+  </div>
+</section>
+
+<section class="view" id="customize">
+  <h1>Customize Your Edit</h1>
+  <p class="sub">Pick a font for captions and text, then describe any changes you want.</p>
+  <h2>A. Select font</h2>
+  <div class="fontlist" id="fontList"></div>
+  <label class="btn ghost full" style="margin-top:10px">Upload your own TTF or OTF font<input type="file" id="fontFile" accept=".ttf,.otf" style="display:none"></label>
+  <h2>B. Describe How You Want Your Video Edited <span class="meta">(optional)</span></h2>
+  <textarea id="prompt" style="min-height:160px" placeholder="Tell ClipGenius how you want your video edited. For example: Add bold animated captions using my selected font, highlight important words in yellow, remove long pauses, add smooth zoom effects, improve the pacing, and make the video engaging."></textarea>
+  <div class="chips" style="margin-top:10px">
+    <span class="chip" onclick="fillPrompt(0)">Bold captions</span>
+    <span class="chip" onclick="fillPrompt(1)">Remove long pauses</span>
+    <span class="chip" onclick="fillPrompt(2)">Smooth zoom</span>
+  </div>
+  <div class="row" style="margin-top:10px"><button class="btn ghost" onclick="clearPrompt()">Clear prompt</button><span class="meta">Leave blank to use default captions.</span></div>
+  <div class="note">Your instructions are saved with the project. Applying cuts, zoom, and pacing needs the AI editing backend, which is not connected yet.</div>
+  <button class="btn full" id="genBtn" style="margin-top:14px;padding:18px;font-size:17px" onclick="generateVideo()">Generate My Video</button>
+</section>
+<section class="view" id="result">
+  <h1>Your video</h1>
+  <div class="card"><div class="row" style="justify-content:space-between"><b id="resTitle">Processing…</b><span class="meta" id="resPct"></span></div><div class="prog"><div id="resBar"></div></div><div class="meta" id="resStep"></div></div>
+  <div id="resErr"></div>
+  <video id="resVid" controls playsinline style="display:none;width:100%;border-radius:16px;margin-top:12px;background:#000"></video>
+  <a id="resDl" class="btn full" style="display:none;margin-top:12px;text-decoration:none;text-align:center">Download Video</a>
+  <button class="btn ghost full" id="retryBtn" style="display:none;margin-top:10px" onclick="generateVideo()">Retry</button>
+  <button class="btn ghost full" style="margin-top:10px" onclick="go('upload')">Create Another Project</button>
+  <button class="btn ghost full" style="margin-top:10px" onclick="go('dash')">Home</button>
+</section>
+</main>
+
+<nav class="tabs">
+  <button data-v="dash" class="on" onclick="go('dash')"><i>🏠</i>Home</button>
+  <button data-v="upload" onclick="go('upload')"><i>⬆️</i>Upload</button>
+  <button data-v="hooks" onclick="go('hooks')"><i>✨</i>Hooks</button>
+  <button data-v="preview" onclick="go('preview')"><i>▶️</i>Preview</button>
+</nav>
+
+<dialog id="exportDlg">
+  <h2 style="margin-top:0">Export</h2>
+  <p class="sub">You can download the original file now. Rendering trimmed, captioned clips needs a video-processing backend, which this prototype doesn't include.</p>
+  <a class="btn full" id="dl" href="#" download>Download original video</a>
+  <button class="btn ghost full" style="margin-top:10px" disabled>Render clip (needs backend)</button>
+  <button class="btn ghost full" style="margin-top:10px" onclick="this.closest('dialog').close()">Close</button>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const S={file:null,url:null,dur:0,topic:'',title:'',tone:'Energetic',fmt:'9:16',style:'box',hooks:[],captions:[],clips:[],live:false,end:0};
+const FMT={'9:16':'','1:1':'f11','16:9':'f169'};
+const INVITE=location.href.split('#')[0]+'#ref='+Math.random().toString(36).slice(2,8);
+const SAMPLES=[['Podcast: founder story','🎙️','12:40'],['Cooking: 5-minute pasta','🍝','4:18'],['Workout: morning routine','💪','9:05']];
+
+function go(v){
+  $$('.view').forEach(s=>s.classList.toggle('on',s.id===v));
+  $$('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='preview')renderPreview();
+  if(v==='customize')renderFonts();
+  if(v==='dash')renderRecent();
+  window.scrollTo(0,0);
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600)}
+function setBadge(){const b=$('#mode');b.textContent=S.live?'Live AI':S.hooks.length?'Demo mode':'Ready';b.className='badge '+(S.live?'live':S.hooks.length?'demo':'')}
+function copyText(t,msg){
+  const fb=()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg||'Copied')}catch(e){toast('Copy failed')}a.remove()};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast(msg||'Copied'),fb);else fb();
+}
+async function share(){
+  const data={title:'ClipGenius',text:"I'm making short videos with ClipGenius. Try it!",url:INVITE};
+  if(navigator.share){try{await navigator.share(data);return}catch(e){if(e.name==='AbortError')return}}
+  copyText(INVITE,'Invite link copied');
+}
+
+// Samples
+
+// Upload (real local file handling)
+const VIDEO_EXT=/\.(mp4|webm|mov|m4v)$/i;
+const ERR_TEXT={1:'loading was stopped',2:'the file could not be read',3:'the video could not be decoded',4:'the browser does not support this format or codec'};
+// Loads the file in a separate hidden video element and waits for real metadata.
+function probeVideo(url){
+  return new Promise(res=>{
+    const v=document.createElement('video');
+    v.preload='metadata';v.muted=true;v.playsInline=true;
+    let fin=false;
+    const done=r=>{if(fin)return;fin=true;v.removeAttribute('src');v.load();res(r)};
+    const ok=d=>done({ok:true,dur:d||0,w:v.videoWidth,h:v.videoHeight});
+    v.onloadedmetadata=()=>{
+      if(v.duration===Infinity){
+        v.currentTime=1e101;
+        v.ontimeupdate=()=>{v.ontimeupdate=null;v.currentTime=0;ok(v.duration)};
+        setTimeout(()=>ok(v.duration),4000);
+      }else ok(v.duration);
+    };
+    v.onerror=()=>done({ok:false,code:v.error?v.error.code:0});
+    setTimeout(()=>done({ok:false,code:0}),15000);
+    v.src=url;
+  });
+}
+// Reads the start and end of the file to see which video codec the MP4 declares.
+async function sniffCodec(f){
+  const dec=b=>new TextDecoder('latin1').decode(b);
+  const head=dec(new Uint8Array(await f.slice(0,8e6).arrayBuffer()));
+  const tail=f.size>8e6?dec(new Uint8Array(await f.slice(Math.max(0,f.size-8e6)).arrayBuffer())):'';
+  const s=head+tail;
+  if(/hvc1|hev1/.test(s))return 'H.265/HEVC';
+  if(/avc1/.test(s))return 'H.264/AVC';
+  return 'codec unknown';
+}
+function explainErr(code,codec,f){
+  const head=`Couldn't play "${esc(f.name)}" in this browser: ${ERR_TEXT[code]||'unknown playback error'} (error code ${code||'none'}).`;
+  if(codec.startsWith('H.265'))return head+" This file uses H.265/HEVC video. Many browsers can't decode it even when the phone's gallery can. Option 1: turn off 'High efficiency' or HEVC video in your camera settings, record again, and pick the new file. Option 2: if the server is connected, you can still continue, and it converts the video to H.264.";
+  return head+' Try an MP4 with H.264 video and AAC audio, or a WebM file. If the server is connected, you can continue and it will convert the file.';
+}
+async function setFile(f){
+  if(!f||!(f.type.startsWith('video/')||VIDEO_EXT.test(f.name))){$('#upMsg').innerHTML=errBox('That file is not a video. Choose an MP4, WebM, MOV, or M4V file.');return}
+  if(S.url)URL.revokeObjectURL(S.url);
+  S.file=f;S.url=URL.createObjectURL(f);S.dur=0;S.clips=[];S.ready=false;S.info=null;
+  $('#upMsg').innerHTML='';
+  $('#vid').src=S.url;
+  renderUpload();
+  const p=await probeVideo(S.url);
+  if(S.file!==f)return;
+  const codec=await sniffCodec(f).catch(()=>'codec unknown');
+  if(S.file!==f)return;
+  if(p.ok){S.ready=true;S.dur=p.dur;S.info={w:p.w,h:p.h,codec};makeClips()}
+  else{S.info={codec,code:p.code};$('#upMsg').innerHTML=errBox(explainErr(p.code,codec,f))}
+  renderUpload();renderPreview();
+}
+function renderUpload(){
+  const i=$('#fileInfo');
+  if(!S.file){i.innerHTML='<span class="meta">No video selected yet.</span>';$('#toCustom').disabled=true;$('#prev').style.display='none';return}
+  const inf=S.info||{};
+  const len=S.ready?mmss(S.dur):(S.info?'unavailable':'checking…');
+  i.innerHTML=`<b>${esc(S.file.name)}</b><div class="meta">${(S.file.size/1048576).toFixed(1)} MB · ${len}${inf.w?' · '+inf.w+'×'+inf.h:''}${inf.codec?' · '+inf.codec:''}</div>`;
+  const pv=$('#prev');
+  if(S.ready){if(pv.src!==S.url)pv.src=S.url;pv.style.display='block'}else pv.style.display='none';
+  $('#toCustom').disabled=!(S.ready||(S.info&&CFG_API.url));
+  $('#toCustom').textContent=S.ready?'Continue →':'Continue (server will convert) →';
+}
+$('#file').addEventListener('change',e=>setFile(e.target.files[0]));
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>setFile(e.dataTransfer.files[0]));
+
+// Hooks: tries live Claude API, falls back to a labeled demo generator
+async function aiHooks(){
+  const prompt=`Write short-video hooks and captions. Topic: ${S.topic}. Video title: ${S.title||'untitled'}. Tone: ${S.tone}. Return ONLY JSON, no markdown: {"hooks":[5 opening lines, each under 12 words],"captions":[3 captions under 150 characters, each with 3 hashtags]}`;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();
+  const j=JSON.parse(d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
+  if(!Array.isArray(j.hooks)||!j.hooks.length)throw new Error('bad shape');
+  return j;
+}
+function demoHooks(){
+  const t=S.topic||S.title||'this', tag=t.replace(/\W+/g,'').slice(0,24)||'video';
+  return{
+    hooks:[`Nobody talks about this part of ${t}`,`Stop scrolling: ${t} in 30 seconds`,`I wish I knew this about ${t} sooner`,`The one mistake everyone makes with ${t}`,`Watch this before you try ${t} again`],
+    captions:[`Quick breakdown of ${t}. Save this for later! #${tag} #shorts #tips`,`Hot take on ${t}. Agree or disagree? #${tag} #viral #creator`,`Part of my series on ${t}. Follow for more! #${tag} #learn #fyp`]
+  };
+}
+async function generate(){
+  const topic=$('#topic').value.trim();
+  if(!topic){toast('Add a topic first');return}
+  S.topic=topic;S.title=$('#vtitle').value.trim();
+  const b=$('#genBtn');b.disabled=true;b.textContent='Generating…';
+  let res,live=false;
+  try{res=await aiHooks();live=true}catch(e){res=demoHooks()}
+  S.hooks=res.hooks;S.captions=res.captions||[];S.live=live;
+  b.disabled=false;b.textContent='Regenerate';
+  $('#hookOut').innerHTML=
+    `<h2>Hooks</h2>`+S.hooks.map((h,i)=>`<div class="item"><p>${esc(h)}</p><button class="copy" data-copy="hooks:${i}">Copy</button></div>`).join('')+
+    `<h2>Captions</h2>`+S.captions.map((c,i)=>`<div class="item"><p>${esc(c)}</p><button class="copy" data-copy="captions:${i}">Copy</button></div>`).join('')+
+    `<p class="meta">${live?'Generated by Claude.':'Demo mode: template text, not AI. Live AI runs in the chat preview; published pages block API calls.'}</p>`;
+  setBadge();makeClips();
+}
+
+// Clips: demo suggestions spread across the real video length
+function makeClips(){
+  const d=S.dur;if(!d){S.clips=[];return}
+  const n=Math.min(4,Math.max(1,Math.floor(d/20)));
+  const L=Math.min(30,d/n*0.9), gap=(d-L*n)/(n+1);
+  S.clips=Array.from({length:n},(_,i)=>{const s=gap*(i+1)+L*i;return{s,e:s+L,t:S.hooks[i]||`Clip ${i+1}`}});
+}
+function renderPreview(){
+  const st=$('#stage');
+  st.className='stage '+FMT[S.fmt]+(S.file?' has':'');
+  drawCap();
+  const sel=$('#hookSel');
+  sel.innerHTML=S.hooks.length?S.hooks.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join(''):'<option>Generate hooks first</option>';
+  $('#clips').innerHTML=S.clips.length
+    ?S.clips.map((c,i)=>`<div class="clip ${i===S.clip?'on':''}" data-clip="${i}"><div class="n">${i+1}</div><div style="flex:1;min-width:0"><div class="t">${esc(c.t)}</div><small>${mmss(c.s)} – ${mmss(c.e)} · ${Math.round(c.e-c.s)}s</small></div></div>`).join('')
+    :'<p class="meta">Upload a video to see suggested clips.</p>';
+}
+$('#vid').addEventListener('timeupdate',e=>{if(S.end&&e.target.currentTime>=S.end){e.target.pause();S.end=0}});
+function playClip(i){
+  const c=S.clips[i];if(!c||!S.file)return;
+  S.clip=i;S.end=c.e;const v=$('#vid');v.currentTime=c.s;v.play().catch(()=>{});
+  $$('.clip').forEach((el,k)=>el.classList.toggle('on',k===i));
+}
+function openExport(){
+  const dl=$('#dl');
+  if(S.file){dl.href=S.url;dl.download=S.file.name}else{dl.removeAttribute('href');dl.textContent='Upload a video first'}
+  $('#exportDlg').showModal();
+}
+
+// Delegated controls
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-copy]');
+  if(c){const[k,i]=c.dataset.copy.split(':');copyText(S[k][i]);return}
+  const t=e.target.closest('[data-tone]');
+  if(t){S.tone=t.dataset.tone;$$('[data-tone]').forEach(x=>x.classList.toggle('on',x===t));return}
+  const f=e.target.closest('[data-fmt]');
+  if(f){S.fmt=f.dataset.fmt;$$('[data-fmt]').forEach(x=>x.classList.toggle('on',x===f));renderPreview();return}
+  const s=e.target.closest('[data-style]');
+  if(s){S.style=s.dataset.style;$$('[data-style]').forEach(x=>x.classList.toggle('on',x===s));renderPreview();return}
+  const cl=e.target.closest('[data-clip]');
+  if(cl)playClip(+cl.dataset.clip);
+});
+$('#hookSel').addEventListener('change',renderPreview);
+/* ===== Auto Captions ===== */
+// Set to your backend's transcription endpoint (see setup notes). Empty = not connected; nothing is faked.
+const CFG_CAP={transcribeUrl:''};
+// Expected response: {segments:[{start,end,text,speaker?,words?:[{w,s,e}]}]}
+const LANGS=[['en','English',true],['es','Spanish',false],['fr','French',false],['pt','Portuguese',false],['ar','Arabic',false]];
+const PRESETS={
+  clean:{font:'system-ui',size:5,color:'#ffffff',bg:true,bgc:'#000000',outline:false,pos:'bottom',mode:'line',hi:'#ffffff',upper:false},
+  bold:{font:'Impact,system-ui',size:7,color:'#ffffff',bg:false,bgc:'#000000',outline:true,pos:'bottom',mode:'line',hi:'#fde047',upper:true},
+  word:{font:'system-ui',size:7,color:'#ffffff',bg:false,bgc:'#000000',outline:true,pos:'middle',mode:'word',hi:'#fde047',upper:true},
+  karaoke:{font:'system-ui',size:6,color:'#9b93b5',bg:false,bgc:'#000000',outline:true,pos:'bottom',mode:'karaoke',hi:'#a78bfa',upper:false}};
+S.segs=[];S.st={...PRESETS.clean};
+const rgba=(h,a)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
+const errBox=m=>`<div class="err">${m}</div>`, okBox=m=>`<div class="ok">${m}</div>`;
+const capMsg=h=>$('#capMsg').innerHTML=h;
+function setProg(p){$('#prog').style.display=p==null?'none':'block';if(p!=null)$('#progBar').style.width=p+'%'}
+function setEBar(p){$('#eprog').style.display=p==null?'none':'block';if(p!=null)$('#eBar').style.width=p+'%'}
+
+// Word timing: real word times from the backend if present, otherwise estimated (labeled in code)
+function wordsOf(g){
+  if(g.words&&g.words.length)return g.words;
+  const ws=g.text.split(/\s+/).filter(Boolean),tot=ws.reduce((a,w)=>a+w.length,0)||1;
+  let t=g.s;const d=g.e-g.s;
+  return ws.map(w=>{const s=t;t+=d*w.length/tot;return{w,s,e:t,est:true}});
+}
+function capContent(t){
+  const g=S.segs.find(x=>t>=x.s&&t<x.e);if(!g)return null;
+  const st=S.st,W=wordsOf(g),f=x=>st.upper?x.toUpperCase():x;
+  if(st.mode==='line')return{html:esc(f(g.text))};
+  if(st.mode==='word'){const c=W.find(x=>t>=x.s&&t<x.e)||W[W.length-1];return{html:`<span style="color:${st.hi}">${esc(f(c.w))}</span>`}}
+  return{html:W.map(x=>`<span style="color:${t>=x.s?st.hi:st.color}">${esc(f(x.w))}</span>`).join(' ')};
+}
+function applyCapStyle(el,st,W){
+  const px=st.size/100*W;
+  Object.assign(el.style,{fontFamily:st.font,fontSize:px+'px',color:st.color,background:st.bg?rgba(st.bgc,.8):'transparent',padding:st.bg?'.2em .5em':'0',borderRadius:st.bg?'8px':'0',textShadow:st.outline?'0 0 3px #000,0 0 3px #000,0 2px 6px #000':'0 2px 6px rgba(0,0,0,.85)',top:'',bottom:'',transform:'',textTransform:st.upper?'uppercase':'none'});
+  if(st.pos==='top')el.style.top='10%';
+  else if(st.pos==='middle'){el.style.top='50%';el.style.transform='translateY(-50%)'}
+  else el.style.bottom='10%';
+}
+function drawCap(){
+  const el=$('#cap'),t=$('#vid').currentTime||0;
+  applyCapStyle(el,S.st,$('#stage').clientWidth||340);
+  if(S.segs.length){const c=capContent(t);el.innerHTML=c?`<span>${c.html}</span>`:''}
+  else if(S.hooks.length){el.innerHTML=`<span>${esc(S.hooks[+$('#hookSel').value]??S.hooks[0])}</span>`}
+  else el.innerHTML=`<span>Your hook appears here</span>`;
+}
+function loopCap(){drawCap();const v=$('#vid');if(!v.paused&&!v.ended)requestAnimationFrame(loopCap)}
+$('#vid').addEventListener('play',()=>requestAnimationFrame(loopCap));
+$('#vid').addEventListener('seeked',drawCap);
+$('#vid').addEventListener('error',()=>{if(S.file)capMsg(errBox("This video can't be played in this browser. Try MP4 (H.264) or WebM."))});
+
+// Style presets and custom controls
+function applyPreset(n){
+  S.preset=n;S.st={...PRESETS[n]};
+  $$('[data-preset]').forEach(x=>x.classList.toggle('on',x.dataset.preset===n));
+  $('#cFont').value=S.st.font;$('#cPos').value=S.st.pos;$('#cSize').value=S.st.size;$('#szV').textContent=S.st.size;
+  $('#cCol').value=S.st.color;$('#cBg').value=S.st.bgc;$('#cOut').value=S.st.outline?'on':'off';$('#cBox').value=S.st.bg?'on':'off';
+  drawCap();
+}
+function setSt(k,v){S.st[k]=v;drawCap()}
+
+// Languages: unsupported ones are shown and disabled
+function langChanged(){
+  const l=LANGS.find(x=>x[0]===$('#lang').value);S.lang=l[0];
+  $('#langNote').textContent=l[2]?'':`${l[1]} transcription isn't supported yet. Choose English.`;
+  $('#autoBtn').disabled=!l[2];
+}
+
+// Transcription client (real service via your backend; no fake transcripts)
+async function transcribe(file,lang){
+  if(!CFG_CAP.transcribeUrl)throw new Error('NOT_CONNECTED');
+  const fd=new FormData();fd.append('file',file);fd.append('language',lang);
+  const r=await fetch(CFG_CAP.transcribeUrl,{method:'POST',body:fd});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error('HTTP '+r.status+(j.error?': '+j.error:''));
+  if(!Array.isArray(j.segments))throw new Error('BAD_RESPONSE');
+  return j.segments.map(x=>({s:+x.start,e:+x.end,text:String(x.text||'').trim(),spk:x.speaker||'',words:x.words||null})).filter(x=>x.text&&x.e>x.s).sort((a,b)=>a.s-b.s);
+}
+async function autoCaptions(){
+  if(!S.file){capMsg(errBox('Upload a video first.'));return}
+  if(S.file.size>25*1048576){capMsg(errBox('This file is over 25 MB. Compress it, or use a backend that supports chunked upload.'));return}
+  $('#autoBtn').disabled=true;capMsg('');setProg(40);$('#capStatus').textContent='Transcribing…';
+  try{
+    S.segs=await transcribe(S.file,S.lang);
+    setProg(100);
+    $('#capStatus').textContent=S.segs.length+' lines';
+    capMsg(S.segs.length?okBox('Transcript ready. Check each line below and fix any mistakes.'):errBox('No speech was detected in this video.'));
+    renderSegs();drawCap();
+  }catch(e){
+    setProg(null);$('#capStatus').textContent='Not transcribed';
+    const m=e.message;
+    capMsg(m==='NOT_CONNECTED'?errBox('Speech-to-text isn\'t connected yet. Add your backend endpoint in CFG_CAP.transcribeUrl. No transcript was made up.')
+      :m==='BAD_RESPONSE'?errBox('The transcription service returned an unexpected response.')
+      :m.startsWith('HTTP')?errBox('Transcription failed ('+m+'). Check your backend logs and service key.')
+      :errBox('Couldn\'t reach the transcription service. Check its URL and your connection.'));
+  }finally{$('#autoBtn').disabled=false;setTimeout(()=>setProg(null),600)}
+}
+
+// Transcript editor
+function renderSegs(){
+  $('#segs').innerHTML=S.segs.length?S.segs.map((g,i)=>`<div class="seg"><textarea onchange="editSeg(${i},'text',this.value)">${esc(g.text)}</textarea><div class="tm"><input type="number" step="0.1" min="0" value="${g.s.toFixed(2)}" onchange="editSeg(${i},'s',this.value)" aria-label="Start seconds"><input type="number" step="0.1" min="0" value="${g.e.toFixed(2)}" onchange="editSeg(${i},'e',this.value)" aria-label="End seconds"><input value="${esc(g.spk)}" placeholder="Speaker" onchange="editSeg(${i},'spk',this.value)"><button class="copy" onclick="delSeg(${i})">Delete</button></div></div>`).join(''):'<p class="meta">No transcript. Run Auto Captions or add a line manually.</p>';
+}
+function editSeg(i,k,v){
+  const g=S.segs[i];
+  if(k==='s'||k==='e'){const n=+v;if(!(n>=0))return;const ns=k==='s'?n:g.s,ne=k==='e'?n:g.e;if(ne<=ns){toast('End must be after start');renderSegs();return}g.s=ns;g.e=ne}
+  else if(k==='text'){g.text=v.trim();g.words=null}
+  else g[k]=v;
+  S.segs.sort((a,b)=>a.s-b.s);renderSegs();drawCap();
+}
+function addSeg(){const t=$('#vid').currentTime||0;S.segs.push({s:t,e:t+2,text:'New caption',spk:''});S.segs.sort((a,b)=>a.s-b.s);renderSegs();drawCap()}
+function delSeg(i){S.segs.splice(i,1);renderSegs();drawCap()}
+
+// Export: real rendering in the browser (canvas + MediaRecorder), real-time speed
+function drawCapCanvas(cx,W,H,t){
+  const g=S.segs.find(x=>t>=x.s&&t<x.e);if(!g)return;
+  const st=S.st,f=x=>st.upper?x.toUpperCase():x,px=st.size/100*W,WD=wordsOf(g);
+  let parts;
+  if(st.mode==='line')parts=[[f(g.text),st.color]];
+  else if(st.mode==='word'){const c=WD.find(x=>t>=x.s&&t<x.e)||WD[WD.length-1];parts=[[f(c.w),st.hi]]}
+  else parts=WD.map(x=>[f(x.w),t>=x.s?st.hi:st.color]);
+  cx.font=`700 ${px}px ${st.font}`;cx.textBaseline='middle';
+  const sp=cx.measureText(' ').width,maxW=W*.88,lines=[[]];let lw=0;
+  parts.forEach(([w,c])=>{const ww=cx.measureText(w).width;if(lw&&lw+sp+ww>maxW){lines.push([]);lw=0}lines[lines.length-1].push([w,c,ww]);lw+=(lw?sp:0)+ww});
+  const lh=px*1.25,total=lines.length*lh;
+  const y0=st.pos==='top'?H*.1:st.pos==='middle'?H/2-total/2:H*.9-total;
+  lines.forEach((ln,li)=>{
+    const lwid=ln.reduce((a,p)=>a+p[2],0)+sp*(ln.length-1),y=y0+li*lh+lh/2;let x=(W-lwid)/2;
+    if(st.bg){cx.fillStyle=st.bgc+'cc';cx.fillRect(x-px*.3,y-lh/2,lwid+px*.6,lh)}
+    ln.forEach(([w,c,ww])=>{if(st.outline){cx.lineWidth=px*.12;cx.strokeStyle='#000';cx.strokeText(w,x,y)}cx.fillStyle=c;cx.fillText(w,x,y);x+=ww+sp});
+  });
+}
+async function exportCaptioned(){
+  const msg=m=>$('#expMsg').innerHTML=m;
+  if(!S.file){msg(errBox('Upload a video first.'));return}
+  if(!S.segs.length){msg(errBox('Add or transcribe captions before exporting.'));return}
+  if(typeof MediaRecorder==='undefined'||!HTMLCanvasElement.prototype.captureStream){msg('<span class="unsup">Export unavailable: this browser can\'t record canvas video. Try Chrome on Android or desktop.</span>');return}
+  const v=$('#vid'),vw=v.videoWidth||640,vh=v.videoHeight||360;
+  const W=Math.min(720,vw);let H=Math.round(W*vh/vw);H-=H%2;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d');
+  const stream=cv.captureStream(30);
+  try{(v.captureStream?v.captureStream():v.mozCaptureStream()).getAudioTracks().forEach(t=>stream.addTrack(t))}catch(e){}
+  const type=['video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+  let rec;
+  try{rec=new MediaRecorder(stream,type?{mimeType:type}:undefined)}catch(e){msg(errBox('Export failed to start: '+e.message));return}
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  const done=new Promise(r=>rec.onstop=r);
+  $('#expBtn').disabled=true;$('#expOut').style.display='none';msg('Rendering… keep this screen open.');
+  try{
+    if(v.currentTime>0)await new Promise(r=>{v.addEventListener('seeked',r,{once:true});v.currentTime=0});
+    const dur=v.duration||1;
+    const draw=()=>{
+      if(v.ended){if(rec.state!=='inactive')rec.stop();return}
+      if(v.paused){if(rec.state!=='inactive')rec.stop();msg(errBox('Export stopped because playback was paused. Export again without pausing.'));return}
+      cx.drawImage(v,0,0,W,H);drawCapCanvas(cx,W,H,v.currentTime);setEBar(v.currentTime/dur*100);
+      requestAnimationFrame(draw);
+    };
+    rec.start(250);await v.play();draw();await done;
+    const blob=new Blob(chunks,{type:rec.mimeType||'video/webm'});
+    const a=$('#expOut');a.href=URL.createObjectURL(blob);a.download=S.file.name.replace(/\.[^.]+$/,'')+'-captioned.webm';
+    a.textContent='Download captioned video ('+(blob.size/1048576).toFixed(1)+' MB)';a.style.display='block';
+    msg(okBox('Export finished. Captions are burned into the video frames.'));
+  }catch(e){msg(errBox('Export failed: '+e.message));try{rec.state!=='inactive'&&rec.stop()}catch(_){}}
+  finally{$('#expBtn').disabled=false;setEBar(null)}
+}
+
+// Init
+$('#lang').innerHTML=LANGS.map(l=>`<option value="${l[0]}">${l[1]}${l[2]?'':' (not yet supported)'}</option>`).join('');
+$('#lang').addEventListener('change',langChanged);
+langChanged();applyPreset('clean');renderSegs();
+
+/* ===== AI-only workflow ===== */
+const FONTS0=[['Sans','system-ui'],['Serif','Georgia,serif'],['Mono','ui-monospace,monospace'],['Impact','Impact,system-ui'],['Rounded','"Trebuchet MS",system-ui']];
+const EXAMPLES=['Add bold captions using my selected font and highlight key words in yellow.','Remove long pauses and tighten the pacing.','Add smooth zoom effects on the most important moments.'];
+S.projects=[];S.fonts=FONTS0.slice();S.font='system-ui';
+const fontLabel=()=>(S.fonts.find(f=>f[1]===S.font)||['selected'])[0];
+function renderFonts(){
+  $('#fontList').innerHTML=S.fonts.map((f,i)=>`<div class="fitem ${f[1]===S.font?'on':''}" onclick="pickFont(${i})"><small class="meta">${esc(f[0])}</small><div style="font-family:${esc(f[1])};font-size:20px;font-weight:700">ClipGenius captions</div></div>`).join('');
+}
+function pickFont(i){S.fontFile=S.fonts[i][2]||null;S.font=S.fonts[i][1];setSt('font',S.font);renderFonts()}
+async function addCustomFont(f){
+  if(!f)return;
+  const name='cf'+Date.now().toString(36);
+  try{
+    const ff=new FontFace(name,`url(${URL.createObjectURL(f)})`);
+    await ff.load();document.fonts.add(ff);
+    S.fonts.push([f.name.replace(/\.[^.]+$/,'').slice(0,20),`'${name}',system-ui`,f]);
+    pickFont(S.fonts.length-1);toast('Font added: '+f.name);
+  }catch(e){toast('Could not load this font. Use a TTF or OTF file.')}
+}
+$('#fontFile').addEventListener('change',e=>addCustomFont(e.target.files[0]));
+function fillPrompt(i){$('#prompt').value=EXAMPLES[i];$('#prompt').focus()}
+function clearPrompt(){$('#prompt').value='';toast('Prompt cleared')}
+function resSet(t,p,s){$('#resTitle').textContent=t;$('#resBar').style.width=Math.min(100,p)+'%';$('#resPct').textContent=p?Math.round(p)+'%':'';$('#resStep').textContent=s||''}
+async function generateVideo(){
+  if(!S.file||(!S.ready&&!CFG_API.url))return toast('This video is not ready. See the message on the Select screen.');
+  S.prompt=$('#prompt').value.trim();
+  if(CFG_API.url)return backendGenerate();
+  go('result');
+  $('#resErr').innerHTML='';$('#resVid').style.display='none';$('#resDl').style.display='none';$('#retryBtn').style.display='none';
+  resSet('Processing…',5,'Preparing your video');
+  S.segs=[];
+  try{
+    if(!CFG_CAP.transcribeUrl)throw new Error('Captions need speech-to-text. Add your transcription backend URL in CFG_CAP.transcribeUrl (see setup steps). AI cuts, zoom, and prompt-based edits need the AI editing backend, which is not connected yet.');
+    resSet('Transcribing speech…',20,'Sending audio to the transcription service');
+    await autoCaptions();
+    if(!S.segs.length)throw new Error('Transcription failed: '+$('#capMsg').innerText.trim());
+    resSet('Rendering captions…',55,'Burning captions in with the '+fontLabel()+' font');
+    setSt('font',S.font);
+    const mirror=setInterval(()=>{const p=parseFloat($('#eBar').style.width)||0;resSet('Rendering captions…',55+p*.4,'Rendering in real time. Keep this screen open.')},500);
+    try{await exportCaptioned()}finally{clearInterval(mirror)}
+    const a=$('#expOut');
+    if(!a.getAttribute('href')||a.style.display==='none')throw new Error('Rendering failed: '+$('#expMsg').innerText.trim());
+    showResult(a.getAttribute('href'));
+  }catch(e){
+    resSet('Processing stopped',0,'');
+    $('#resErr').innerHTML=errBox(esc(e.message));
+    $('#retryBtn').style.display='block';
+  }
+}
+function showResult(href){
+  const note=S.lastSummary||('Captions applied with the '+fontLabel()+' font.');
+  S.lastSummary=null;
+  resSet('Your video is ready',100,note);
+  const v=$('#resVid');v.src=href;v.style.display='block';
+  const ext=href.startsWith('blob:')?'webm':'mp4';
+  const d=$('#resDl');d.href=href;d.download=S.file.name.replace(/\.[^.]+$/,'')+'-captioned.'+ext;d.style.display='block';
+  S.projects.unshift({name:S.file.name,url:href,date:new Date().toLocaleString()});saveProjects();renderRecent();
+}
+renderRecent();
+
+/* ===== Backend processing and project storage ===== */
+const CFG_API={url:''}; // REQUIRED: paste your Render URL between the quotes, e.g. 'https://clipgenius-backend.onrender.com' (no trailing slash)
+function loadProjects(){try{S.projects=JSON.parse(localStorage.getItem('clipgenius-projects')||'[]')}catch(e){S.projects=[]}}
+function saveProjects(){try{localStorage.setItem('clipgenius-projects',JSON.stringify(S.projects.slice(0,20)))}catch(e){}}
+function renderRecent(){
+  const r=S.projects;
+  $('#recent').innerHTML=r.length?r.map((p,i)=>`<div class="item"><p><b>${esc(p.name)}</b><br><span class="meta">${esc(p.date||'')}</span></p><div class="row"><button class="copy" onclick="openProject(${i})">Open</button><a class="copy" style="text-decoration:none" href="${esc(p.url)}" download>Download</a></div></div>`).join(''):'<p class="meta">No projects yet. Finished videos appear here.</p>';
+}
+function openProject(i){
+  const p=S.projects[i];if(!p)return;
+  go('result');$('#resErr').innerHTML='';$('#retryBtn').style.display='none';
+  resSet('Your video',100,'Opened from recent projects. If it does not load, the server restarted and deleted it.');
+  const v=$('#resVid');v.src=p.url;v.style.display='block';
+  const d=$('#resDl');d.href=p.url;d.download=p.name.replace(/\.[^.]+$/,'')+'-captioned.mp4';d.style.display='block';
+}
+function backendFontName(){return S.font.startsWith('Georgia')?'DejaVu Serif':S.font.startsWith('ui-monospace')?'DejaVu Sans Mono':'DejaVu Sans'}
+function failRes(m){resSet('Processing stopped',0,'');$('#resErr').innerHTML=errBox(esc(m));$('#retryBtn').style.display='block'}
+function backendGenerate(){
+  const base=CFG_API.url.replace(/\/$/,'');
+  const fd=new FormData();
+  fd.append('video',S.file,S.file.name);fd.append('language','en');fd.append('font',backendFontName());fd.append('prompt',S.prompt||'');
+  if(S.fontFile)fd.append('font_file',S.fontFile,S.fontFile.name);
+  go('result');
+  $('#resErr').innerHTML='';$('#resVid').style.display='none';$('#resDl').style.display='none';$('#retryBtn').style.display='none';
+  resSet('Uploading video…',1,'Sending '+(S.file.size/1048576).toFixed(1)+' MB to the ClipGenius server');
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST',base+'/jobs');
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=e.loaded/e.total;resSet('Uploading video…',p*15,'Uploaded '+Math.round(p*100)+'%')}};
+  xhr.onload=()=>{
+    let j={};try{j=JSON.parse(xhr.responseText)}catch(e){}
+    if(xhr.status!==200)return failRes(j.detail||('Upload failed (HTTP '+xhr.status+')'));
+    pollJob(base,j.id);
+  };
+  xhr.onerror=()=>failRes("Couldn't reach the ClipGenius server. Check the backend URL and your connection.");
+  xhr.send(fd);
+}
+async function pollJob(base,id){
+  for(let n=0;n<900;n++){
+    await new Promise(r=>setTimeout(r,2000));
+    let j;
+    try{const r=await fetch(`${base}/jobs/${id}`);j=await r.json();if(!r.ok)throw new Error(j.detail||'HTTP '+r.status)}
+    catch(e){return failRes('Lost contact with the server ('+e.message+'). Tap Retry to start again.')}
+    if(j.status==='error')return failRes(j.message||'Processing failed.');
+    if(j.status==='done'){S.lastSummary=(j.summary||[]).join(' ');return showResult(`${base}/jobs/${id}/file`)}
+    resSet('Processing…',15+(j.progress||0)*.85,j.stage||'');
+  }
+  failRes('Processing took too long. Tap Retry to start again.');
+}
+loadProjects();renderRecent();
+</script>
+</body></html>
